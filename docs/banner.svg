@@ -22,11 +22,19 @@
   <rect x="112" y="144" width="150" height="8" rx="4" fill="#49454f"/>
   <rect x="112" y="162" width="110" height="8" rx="4" fill="#3a3543"/>
   <rect x="112" y="180" width="170" height="8" rx="4" fill="#3a3543"/>
-  <text x="112" y="216" font-family="ui-monospace, 'Courier New', monospace" font-size="13" fill="#7fdbca">root:root · labeled · bootable</text>
+  <text x="112" y="214" font-family="ui-monospace, 'Courier New', monospace" font-size="14" fill="#7fdbca">✔ system_new.img written</text>
 
   <!-- wordmark -->
   <text x="370" y="150" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="84" fill="#e6e1e5" letter-spacing="1">Tux</text>
   <text x="513" y="150" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="84" fill="url(#accent)" letter-spacing="1">Kitchen</text>
   <text x="372" y="196" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="400" font-size="26" fill="#cac4d0">A free &amp; open Android ROM kitchen for Linux</text>
   <text x="372" y="230" font-family="ui-monospace, 'Courier New', monospace" font-size="17" fill="#938f99">unpack · edit · label · build · package — no Python, no WSL</text>
+
+  <!-- claim chips -->
+  <rect x="372" y="248" width="96" height="28" rx="14" fill="#4f378b"/>
+  <text x="392" y="267" font-family="ui-monospace, 'Courier New', monospace" font-size="14" fill="#eaddff">root:root</text>
+  <rect x="480" y="248" width="150" height="28" rx="14" fill="#4f378b"/>
+  <text x="498" y="267" font-family="ui-monospace, 'Courier New', monospace" font-size="14" fill="#eaddff">SELinux labeled</text>
+  <rect x="642" y="248" width="82" height="28" rx="14" fill="#4f378b"/>
+  <text x="662" y="267" font-family="ui-monospace, 'Courier New', monospace" font-size="14" fill="#eaddff">boots</text>
 </svg>
