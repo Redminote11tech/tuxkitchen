@@ -42,6 +42,7 @@ const TOOLS: &[(&str, &str, &str)] = &[
     ("xz", "payload.bin xz blobs", "pacman: xz"),
     ("bzip2", "payload.bin bzip2 blobs", "pacman: bzip2"),
     ("zstd", "payload.bin zstd blobs", "pacman: zstd"),
+    ("gzip", "kernel embedded-config (IKCONFIG) decompression", "pacman: gzip"),
 ];
 
 #[tauri::command]

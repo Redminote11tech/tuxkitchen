@@ -86,6 +86,14 @@ export function PartitionsView({ activeProject }: PartitionsViewProps) {
           await invoke("extract_f2fs", { input: selectedFile, outputDir: `${workspace}/extracted_f2fs` });
         } else if (action === "file_contexts") {
           await invoke("convert_file_contexts", { input: selectedFile, output: `${workspace}/file_contexts.txt` });
+        } else if (action === "sdat") {
+          const base = selectedFile.split('/').pop() || "system.new.dat";
+          const prefix = base.replace(/\.new\.dat$/, "").replace(/\.dat$/, "");
+          const out = await invoke<string>("sdat_to_img", {
+            datPath: selectedFile,
+            output: `${workspace}/${prefix}.img`,
+          });
+          toast.success(`Wrote ${out.split('/').pop()}`);
         }
       });
     } catch (e) {
@@ -153,6 +161,10 @@ export function PartitionsView({ activeProject }: PartitionsViewProps) {
           <button className="secondary flex-row" onClick={() => handleAction("brotli")} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ArchiveRestore size={18} />
             Decompress .br
+          </button>
+          <button className="secondary flex-row" onClick={() => handleAction("sdat")} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <FileText size={18} />
+            NEW.DAT to image
           </button>
           <button className="secondary flex-row" onClick={() => handleAction("ext4")} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <HardDrive size={18} />

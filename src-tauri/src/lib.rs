@@ -14,6 +14,8 @@ mod dtbo;
 mod payload;
 mod props;
 mod browse;
+mod ikconfig;
+mod sdat;
 
 #[tauri::command]
 async fn unpack_rom(app_handle: AppHandle, file_path: String, workspace_path: String) -> Result<(), String> {
@@ -111,7 +113,9 @@ pub fn run() {
             browse::rename_path,
             browse::delete_path,
             browse::apktool_decompile,
-            browse::apktool_recompile
+            browse::apktool_recompile,
+            ikconfig::read_kernel_config,
+            sdat::sdat_to_img
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

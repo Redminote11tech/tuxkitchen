@@ -198,6 +198,9 @@ pub async fn build_image(
 
         let want_sparse = sparse.unwrap_or(false);
         let want_verify = verify.unwrap_or(true);
+        // Kernel filesystem support check from the boot image's embedded
+        // config, when the user has unpacked boot in the workspace.
+        crate::ikconfig::log_build_warnings(&app, &workspace, &format);
         let out = Path::new(&output_img);
         let out_mb = (dir_size_mb(input_dir.trim()) * 125 / 100).max(64);
         let inodes = (count_entries(input_dir.trim()) * 115 / 100).max(1024);
