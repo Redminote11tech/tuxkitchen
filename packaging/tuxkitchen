@@ -1,4 +1,7 @@
 #!/bin/sh
-# Match the project's existing WebKit/NVIDIA renderer workaround.
-export WEBKIT_DISABLE_DMABUF_RENDERER="${WEBKIT_DISABLE_DMABUF_RENDERER:-1}"
+# WebKit's DMABUF renderer is the fast path; it works on current NVIDIA
+# drivers (tested on Wayland + GTX 1660 SUPER, WebKit 2.52). Set
+# WEBKIT_DISABLE_DMABUF_RENDERER=1 only if you hit the blank/flickering
+# window bug - you trade the bug for laggy scrolling.
+export WEBKIT_DISABLE_DMABUF_RENDERER="${WEBKIT_DISABLE_DMABUF_RENDERER:-0}"
 exec /usr/lib/tuxkitchen/tuxkitchen "$@"

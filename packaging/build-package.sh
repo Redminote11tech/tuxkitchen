@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
-version=0.1.0
+version=0.1.1
 # Explicit inputs avoid node_modules, target, workspaces and previous packages.
 tar -czf "tuxkitchen-${version}.tar.gz" --transform="s,^,tuxkitchen-${version}/," \
   -C .. package.json bun.lock index.html tsconfig.json tsconfig.node.json \

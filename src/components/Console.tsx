@@ -18,13 +18,29 @@ export function Console() {
   );
   const logs = getLogs();
   const consoleEndRef = useRef<HTMLDivElement>(null);
+  const stickToBottom = useRef(true);
 
+  // Follow new output only while the user is already at the bottom, and do
+  // it instantly: a smooth-scroll animation per streamed line is jank.
   useEffect(() => {
-    consoleEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const end = consoleEndRef.current;
+    const container = end?.parentElement;
+    if (!end || !container) return;
+    if (stickToBottom.current) {
+      end.scrollIntoView({ block: "end" });
+    }
   }, [logs.length]);
 
+  const onScroll = () => {
+    const end = consoleEndRef.current;
+    const container = end?.parentElement;
+    if (!container) return;
+    const distance = container.scrollHeight - container.scrollTop - container.clientHeight;
+    stickToBottom.current = distance < 80;
+  };
+
   return (
-    <div className="console-container">
+    <div className="console-container" onScroll={onScroll}>
       {logs.map((log, index) => (
         <div key={index} className={logClass(log)}>{log}</div>
       ))}

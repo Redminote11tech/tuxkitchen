@@ -84,25 +84,28 @@ This is verified by tests that build a real image and read it back with
 
 ### CachyOS / Arch Linux — package
 
-Grab `tuxkitchen-0.1.0-4-x86_64.pkg.tar.zst` from
+Grab `tuxkitchen-0.1.1-1-x86_64.pkg.tar.zst` from
 [Releases](https://github.com/Redminote11tech/tuxkitchen/releases) (or build it
 yourself), then:
 
 ```sh
-sudo pacman -U tuxkitchen-0.1.0-4-x86_64.pkg.tar.zst
+sudo pacman -U tuxkitchen-0.1.1-1-x86_64.pkg.tar.zst
 tuxkitchen
 ```
 
-Installs a desktop entry, icons and a launcher that preserves the WebKit
-DMA-BUF workaround (set `WEBKIT_DISABLE_DMABUF_RENDERER=0` to override).
+Installs a desktop entry, icons and a launcher. The launcher keeps WebKit's
+DMABUF renderer enabled — the fast path, smooth scrolling. If your machine
+shows a blank or flickering window (older NVIDIA drivers are the usual
+suspect), start it once with `WEBKIT_DISABLE_DMABUF_RENDERER=1 tuxkitchen`;
+you trade the glitch for slower scrolling.
 
 ### AppImage — any distro
 
-Download `tuxkitchen_0.1.0_amd64.AppImage`, make it executable, run:
+Download `tuxkitchen_0.1.1_amd64.AppImage`, make it executable, run:
 
 ```sh
-chmod +x tuxkitchen_0.1.0_amd64.AppImage
-./tuxkitchen_0.1.0_amd64.AppImage
+chmod +x tuxkitchen_0.1.1_amd64.AppImage
+./tuxkitchen_0.1.1_amd64.AppImage
 ```
 
 The kitchen drives **your system's** tooling — run the built-in **Tools**
