@@ -37,6 +37,7 @@ const TOOLS: &[(&str, &str, &str)] = &[
     ("mkfs.erofs", "EROFS image creation", "pacman: erofs-utils"),
     ("fsck.erofs", "EROFS extraction and verification", "pacman: erofs-utils"),
     ("baksmali", "deodexing", "AUR: android-apktool or smali"),
+    ("apktool", "APK decompile/recompile", "AUR: android-apktool (needs java)"),
     ("sefcontext_decompile", "file_contexts.bin decompilation", "not packaged on Arch - decompile manually or supply file_contexts.txt"),
     ("xz", "payload.bin xz blobs", "pacman: xz"),
     ("bzip2", "payload.bin bzip2 blobs", "pacman: bzip2"),

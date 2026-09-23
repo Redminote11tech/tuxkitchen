@@ -3,6 +3,7 @@ import { FolderOpen, FileArchive, ScanSearch } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { Project } from "./ProjectsView";
+import { toast } from "../lib/toastStore";
 
 interface ProbeResult {
   kind: string;
@@ -60,7 +61,7 @@ export function UnpackerView({ activeProject }: UnpackerViewProps) {
 
   const handleUnpack = async () => {
     if (!selectedFile || !workspace) {
-      alert("Please select both a file and a workspace.");
+      toast.error("Please select both a file and a workspace.");
       return;
     }
     try {
@@ -72,7 +73,7 @@ export function UnpackerView({ activeProject }: UnpackerViewProps) {
 
   const handleBuildSuper = async () => {
     if (!workspace) {
-      alert("Please select a workspace containing the partition images.");
+      toast.error("Please select a workspace containing the partition images.");
       return;
     }
     try {

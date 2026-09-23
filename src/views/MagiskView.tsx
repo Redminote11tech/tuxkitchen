@@ -3,6 +3,8 @@ import { FolderOpen, FileCode, ShieldCheck, Wrench, Package, ArrowDownToLine, Co
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { Project } from "./ProjectsView";
+import { toast } from "../lib/toastStore";
+import { runBusy } from "../lib/busyStore";
 
 interface MagiskViewProps {
   activeProject: Project | null;
@@ -63,30 +65,32 @@ export function MagiskView({ activeProject }: MagiskViewProps) {
 
   const handleAction = async (action: string) => {
     if (!selectedBoot || !workspace) {
-      alert("Please select an image and an output directory.");
+      toast.error("Please select an image and an output directory.");
       return;
     }
     try {
-      if (action === "unpack") {
-        await invoke("unpack_boot", { input: selectedBoot, outputDir: workspace });
-      } else if (action === "repack") {
-        await invoke("repack_boot", { inputDir: workspace, output: `${workspace}/new-boot.img` });
-      } else if (action === "patch") {
-        if (!selectedApk) {
-            alert("Please select a Magisk APK to patch.");
-            return;
+      await runBusy(`Boot Lab: ${action}`, async () => {
+        if (action === "unpack") {
+          await invoke("unpack_boot", { input: selectedBoot, outputDir: workspace });
+        } else if (action === "repack") {
+          await invoke("repack_boot", { inputDir: workspace, output: `${workspace}/new-boot.img` });
+        } else if (action === "patch") {
+          if (!selectedApk) {
+              toast.error("Please select a Magisk APK to patch.");
+              return;
+          }
+          await invoke("patch_magisk", { bootImage: selectedBoot, magiskApk: selectedApk, outputDir: workspace });
+        } else if (action === "vbmeta") {
+          await invoke("patch_vbmeta", { vbmetaImage: selectedBoot, outputDir: workspace });
+        } else if (action === "dtbo_unpack") {
+          await invoke("dtbo_unpack", { input: selectedBoot, outputDir: `${workspace}/dtbo_parts` });
+        } else if (action === "dtbo_pack") {
+          await invoke("dtbo_pack", { inputDir: `${workspace}/dtbo_parts`, output: `${workspace}/dtbo_new.img`, pageSize: null });
         }
-        await invoke("patch_magisk", { bootImage: selectedBoot, magiskApk: selectedApk, outputDir: workspace });
-      } else if (action === "vbmeta") {
-        await invoke("patch_vbmeta", { vbmetaImage: selectedBoot, outputDir: workspace });
-      } else if (action === "dtbo_unpack") {
-        await invoke("dtbo_unpack", { input: selectedBoot, outputDir: `${workspace}/dtbo_parts` });
-      } else if (action === "dtbo_pack") {
-        await invoke("dtbo_pack", { inputDir: `${workspace}/dtbo_parts`, output: `${workspace}/dtbo_new.img`, pageSize: null });
-      }
+      });
     } catch (e) {
       console.error(e);
-      alert(`Operation failed: ${e}`);
+      toast.error(`Operation failed: ${e}`);
     }
   };
 

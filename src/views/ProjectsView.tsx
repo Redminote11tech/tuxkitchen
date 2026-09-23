@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { FolderOpen, Plus, Trash2, FolderCode } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
+import { toast } from "../lib/toastStore";
 
 export interface Project {
   id: string;
@@ -48,7 +49,7 @@ export function ProjectsView({ onProjectSelect }: ProjectsViewProps) {
 
   const handleCreate = async () => {
     if (!newProjectName || !newProjectPath) {
-      alert("Please provide both a name and a workspace directory.");
+      toast.error("Please provide both a name and a workspace directory.");
       return;
     }
     try {
@@ -58,7 +59,7 @@ export function ProjectsView({ onProjectSelect }: ProjectsViewProps) {
       loadProjects();
     } catch (e) {
       console.error(e);
-      alert(`Failed to create project: ${e}`);
+      toast.error(`Failed to create project: ${e}`);
     }
   };
 

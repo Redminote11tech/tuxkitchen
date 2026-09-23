@@ -3,6 +3,7 @@ import { FolderOpen, FileCode, ArrowDownToLine, Package, AlertTriangle } from "l
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { Project } from "./ProjectsView";
+import { toast } from "../lib/toastStore";
 
 interface LegacyViewProps {
   activeProject: Project | null;
@@ -49,20 +50,20 @@ export function LegacyView({ activeProject }: LegacyViewProps) {
 
   const handleAction = async (action: string) => {
     if (!aikPath) {
-        alert("Please set the path to your Android Image Kitchen directory.");
+        toast.error("Please set the path to your Android Image Kitchen directory.");
         return;
     }
     try {
       if (action === "unpack") {
-        if (!selectedBoot) { alert("Please select a boot image to unpack."); return; }
+        if (!selectedBoot) { toast.error("Please select a boot image to unpack."); return; }
         await invoke("aik_unpack", { aikPath, bootImage: selectedBoot });
       } else if (action === "repack") {
-        if (!workspace) { alert("Please ensure a workspace output directory is set."); return; }
+        if (!workspace) { toast.error("Please ensure a workspace output directory is set."); return; }
         await invoke("aik_repack", { aikPath, outputImage: `${workspace}/image-new.img` });
       }
     } catch (e) {
       console.error(e);
-      alert(`AIK Error: ${e}`);
+      toast.error(`AIK Error: ${e}`);
     }
   };
 

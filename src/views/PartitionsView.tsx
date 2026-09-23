@@ -3,6 +3,8 @@ import { FolderOpen, FileCode, Cpu, Layers, ArchiveRestore, HardDrive, FileText,
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { Project } from "./ProjectsView";
+import { toast } from "../lib/toastStore";
+import { runBusy } from "../lib/busyStore";
 
 interface ProbeResult {
   kind: string;
@@ -60,32 +62,35 @@ export function PartitionsView({ activeProject }: PartitionsViewProps) {
 
   const handleAction = async (action: string) => {
     if (!selectedFile || !workspace) {
-      alert("Please select both a file and a workspace/output directory.");
+      toast.error("Please select both a file and a workspace/output directory.");
       return;
     }
     try {
-      if (action === "sparse") {
-        await invoke("convert_sparse", { input: selectedFile, output: `${workspace}/raw.img` });
-      } else if (action === "to_sparse") {
-        await invoke("to_sparse", { input: selectedFile, output: `${workspace}/sparse.img` });
-      } else if (action === "super") {
-        await invoke("unpack_super", { input: selectedFile, outputDir: workspace });
-      } else if (action === "brotli") {
-        await invoke("decompress_brotli", { input: selectedFile, output: selectedFile.replace('.br', '') });
-      } else if (action === "payload") {
-        await invoke("extract_payload", { payloadPath: selectedFile, outputDir: workspace });
-      } else if (action === "ext4") {
-        await invoke("extract_ext4", { input: selectedFile, outputDir: `${workspace}/extracted_ext4` });
-      } else if (action === "erofs") {
-        await invoke("extract_erofs", { input: selectedFile, outputDir: `${workspace}/extracted_erofs` });
-      } else if (action === "f2fs") {
-        await invoke("extract_f2fs", { input: selectedFile, outputDir: `${workspace}/extracted_f2fs` });
-      } else if (action === "file_contexts") {
-        await invoke("convert_file_contexts", { input: selectedFile, output: `${workspace}/file_contexts.txt` });
-      }
+      await runBusy(`Working: ${action}`, async () => {
+        if (action === "sparse") {
+          await invoke("convert_sparse", { input: selectedFile, output: `${workspace}/raw.img` });
+        } else if (action === "to_sparse") {
+          await invoke("to_sparse", { input: selectedFile, output: `${workspace}/sparse.img` });
+        } else if (action === "super") {
+          await invoke("unpack_super", { input: selectedFile, outputDir: workspace });
+        } else if (action === "brotli") {
+          await invoke("decompress_brotli", { input: selectedFile, output: selectedFile.replace('.br', '') });
+        } else if (action === "payload") {
+          const parts = await invoke<string[]>("extract_payload", { payloadPath: selectedFile, outputDir: workspace });
+          toast.success(`Extracted: ${parts.join(", ")}`);
+        } else if (action === "ext4") {
+          await invoke("extract_ext4", { input: selectedFile, outputDir: `${workspace}/extracted_ext4` });
+        } else if (action === "erofs") {
+          await invoke("extract_erofs", { input: selectedFile, outputDir: `${workspace}/extracted_erofs` });
+        } else if (action === "f2fs") {
+          await invoke("extract_f2fs", { input: selectedFile, outputDir: `${workspace}/extracted_f2fs` });
+        } else if (action === "file_contexts") {
+          await invoke("convert_file_contexts", { input: selectedFile, output: `${workspace}/file_contexts.txt` });
+        }
+      });
     } catch (e) {
       console.error(e);
-      alert(`Action failed: ${e}`);
+      toast.error(`Action failed: ${e}`);
     }
   };
 

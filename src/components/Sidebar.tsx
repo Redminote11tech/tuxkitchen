@@ -1,4 +1,4 @@
-import { Box, PackageOpen, Trash2, ShieldAlert, Terminal, FolderCode, Layers, Archive, History, Wrench } from "lucide-react";
+import { Box, PackageOpen, Trash2, ShieldAlert, Terminal, FolderCode, Layers, Archive, History, Wrench, FolderTree, FileCog } from "lucide-react";
 
 interface SidebarProps {
   activeView: string;
@@ -9,6 +9,8 @@ export function Sidebar({ activeView, setActiveView }: SidebarProps) {
   const navItems = [
     { name: "Projects", icon: <FolderCode size={20} /> },
     { name: "Unpacker", icon: <PackageOpen size={20} /> },
+    { name: "Files", icon: <FolderTree size={20} /> },
+    { name: "Props", icon: <FileCog size={20} /> },
     { name: "Partitions", icon: <Layers size={20} /> },
     { name: "Debloat", icon: <Trash2 size={20} /> },
     { name: "Magisk", icon: <ShieldAlert size={20} /> },

@@ -3,6 +3,8 @@ import { FolderOpen, FileCode, Trash2, Settings2, FileTerminal, ShieldCheck, Und
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { Project } from "./ProjectsView";
+import { toast } from "../lib/toastStore";
+import { runBusy } from "../lib/busyStore";
 
 interface DebloatViewProps {
   activeProject: Project | null;
@@ -90,7 +92,7 @@ export function DebloatView({ activeProject }: DebloatViewProps) {
       loadApps(workspace);
     } catch (e) {
       console.error(e);
-      alert(`Failed to remove app: ${e}`);
+      toast.error(`Failed to remove app: ${e}`);
     }
   };
 
@@ -101,13 +103,13 @@ export function DebloatView({ activeProject }: DebloatViewProps) {
       loadApps(workspace);
     } catch (e) {
       console.error(e);
-      alert(`Failed to restore app: ${e}`);
+      toast.error(`Failed to restore app: ${e}`);
     }
   };
 
   const handleRunScript = async () => {
     if (!customScript || !workspace) {
-      alert("Select a script and workspace first.");
+      toast.error("Select a script and workspace first.");
       return;
     }
     try {
@@ -120,18 +122,26 @@ export function DebloatView({ activeProject }: DebloatViewProps) {
   const handleSamsungDisarm = async () => {
     if (!workspace) return;
     try {
-      await invoke("run_samsung_disarm", { workspacePath: workspace });
+      await runBusy("Samsung disarm", () =>
+        invoke("run_samsung_disarm", { workspacePath: workspace }),
+      );
+      toast.success("Disarm finished - check the log for per-image results.");
     } catch (e) {
       console.error(e);
+      toast.error(`Disarm failed: ${e}`);
     }
   };
 
   const handleDeodex = async () => {
     if (!workspace) return;
     try {
-      await invoke("run_deodex", { workspacePath: workspace });
+      await runBusy("Deodexing apps", () =>
+        invoke("run_deodex", { workspacePath: workspace }),
+      );
+      toast.success("Deodex finished - check the log for per-app results.");
     } catch (e) {
       console.error(e);
+      toast.error(`Deodex failed: ${e}`);
     }
   };
 

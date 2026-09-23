@@ -9,6 +9,9 @@ import { DebloatView } from "./views/DebloatView";
 import { BuildView } from "./views/BuildView";
 import { LegacyView } from "./views/LegacyView";
 import { ToolsView } from "./views/ToolsView";
+import { FilesView } from "./views/FilesView";
+import { PropsView } from "./views/PropsView";
+import { Toasts } from "./components/Toasts";
 import { TitleBar } from "./components/TitleBar";
 import "./index.css";
 
@@ -27,6 +30,10 @@ function App() {
         return <ProjectsView onProjectSelect={handleProjectSelect} />;
       case "Unpacker":
         return <UnpackerView activeProject={activeProject} />;
+      case "Files":
+        return <FilesView activeProject={activeProject} />;
+      case "Props":
+        return <PropsView activeProject={activeProject} />;
       case "Partitions":
         return <PartitionsView activeProject={activeProject} />;
       case "Debloat":
@@ -60,6 +67,7 @@ function App() {
           </div>
         </div>
       </div>
+      <Toasts />
     </div>
   );
 }

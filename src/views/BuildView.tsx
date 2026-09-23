@@ -3,6 +3,8 @@ import { FolderOpen, Package, Layers, Archive, FileArchive, BadgeCheck } from "l
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { Project } from "./ProjectsView";
+import { toast } from "../lib/toastStore";
+import { runBusy } from "../lib/busyStore";
 
 interface BuildViewProps {
   activeProject: Project | null;
@@ -52,46 +54,54 @@ export function BuildView({ activeProject }: BuildViewProps) {
 
   const handleBuildImage = async () => {
     if (!targetDir || !workspace) {
-      alert("Please select a target directory to build and ensure workspace is set.");
+      toast.error("Please select a target directory to build and ensure workspace is set.");
       return;
     }
     const partitionName = targetDir.split('/').pop() || 'partition';
     try {
-      await invoke("build_image", {
-        inputDir: targetDir,
-        outputImg: `${workspace}/${partitionName}_new.img`,
-        format,
-        sparse: format === "ext4" ? sparseOut : false,
-        verify,
-        erofsAlgo: format === "erofs" ? erofsAlgo : null,
-      });
+      await runBusy(`Building ${partitionName} (${format})`, () =>
+        invoke("build_image", {
+          inputDir: targetDir,
+          outputImg: `${workspace}/${partitionName}_new.img`,
+          format,
+          sparse: format === "ext4" ? sparseOut : false,
+          verify,
+          erofsAlgo: format === "erofs" ? erofsAlgo : null,
+        }),
+      );
+      toast.success(`${partitionName}_new.img built.`);
     } catch (e) {
       console.error(e);
-      alert(`Build failed: ${e}`);
+      toast.error(`Build failed: ${e}`);
     }
   };
 
   const handleBuildSuper = async () => {
     if (!workspace) return;
     try {
-      await invoke("build_super", { workspacePath: workspace, outputImg: `${workspace}/super_new.img` });
+      await runBusy("Building super.img", () =>
+        invoke("build_super", { workspacePath: workspace, outputImg: `${workspace}/super_new.img` }),
+      );
+      toast.success("super_new.img built.");
     } catch (e) {
       console.error(e);
-      alert(`Super build failed: ${e}`);
+      toast.error(`Super build failed: ${e}`);
     }
   };
 
   const handleBuildTar = async (md5: boolean) => {
     if (!workspace) return;
     try {
-      if (md5) {
-        await invoke("build_tar_md5", { inputDir: workspace, outputTar: `${workspace}/Odin_Flashable.tar.md5` });
-      } else {
-        await invoke("build_tar", { inputDir: workspace, outputTar: `${workspace}/Odin_Flashable.tar` });
-      }
+      const out = md5 ? "Odin_Flashable.tar.md5" : "Odin_Flashable.tar";
+      await runBusy(`Creating ${out}`, () =>
+        md5
+          ? invoke("build_tar_md5", { inputDir: workspace, outputTar: `${workspace}/${out}` })
+          : invoke("build_tar", { inputDir: workspace, outputTar: `${workspace}/${out}` }),
+      );
+      toast.success(`${out} created.`);
     } catch (e) {
       console.error(e);
-      alert(`Tar build failed: ${e}`);
+      toast.error(`Tar build failed: ${e}`);
     }
   };
 
@@ -100,10 +110,14 @@ export function BuildView({ activeProject }: BuildViewProps) {
     try {
       const file = await open({ multiple: false });
       if (file && typeof file === "string") {
-        await invoke("compress_lz4", { input: file, output: `${file}.lz4` });
+        await runBusy("Compressing to .lz4", () =>
+          invoke("compress_lz4", { input: file, output: `${file}.lz4` }),
+        );
+        toast.success("LZ4 written.");
       }
     } catch (e) {
       console.error(e);
+      toast.error(`Compression failed: ${e}`);
     }
   };
 

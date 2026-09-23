@@ -12,6 +12,8 @@ mod fsconfig;
 mod tools;
 mod dtbo;
 mod payload;
+mod props;
+mod browse;
 
 #[tauri::command]
 async fn unpack_rom(app_handle: AppHandle, file_path: String, workspace_path: String) -> Result<(), String> {
@@ -101,7 +103,15 @@ pub fn run() {
             tools::probe_file,
             dtbo::dtbo_unpack,
             dtbo::dtbo_pack,
-            payload::extract_payload
+            payload::extract_payload,
+            props::list_prop_files,
+            props::read_prop_file,
+            props::save_prop_file,
+            browse::list_dir,
+            browse::rename_path,
+            browse::delete_path,
+            browse::apktool_decompile,
+            browse::apktool_recompile
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
