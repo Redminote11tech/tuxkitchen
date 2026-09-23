@@ -49,6 +49,12 @@ export function getSeq(): number {
   return seq;
 }
 
+export function clearLogs() {
+  lines = ["[System] Log cleared."];
+  seq++;
+  subscribers.forEach((fn) => fn());
+}
+
 let started = false;
 export function startLogListener() {
   if (started) return;

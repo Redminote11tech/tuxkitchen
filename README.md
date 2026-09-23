@@ -88,12 +88,12 @@ This is verified by tests that build a real image and read it back with
 
 ### CachyOS / Arch Linux — package
 
-Grab `tuxkitchen-0.1.3-1-x86_64.pkg.tar.zst` from
+Grab `tuxkitchen-0.1.4-1-x86_64.pkg.tar.zst` from
 [Releases](https://github.com/Redminote11tech/tuxkitchen/releases) (or build it
 yourself), then:
 
 ```sh
-sudo pacman -U tuxkitchen-0.1.3-1-x86_64.pkg.tar.zst
+sudo pacman -U tuxkitchen-0.1.4-1-x86_64.pkg.tar.zst
 tuxkitchen
 ```
 
@@ -105,11 +105,11 @@ you trade the glitch for slower scrolling.
 
 ### AppImage — any distro
 
-Download `tuxkitchen_0.1.3_amd64.AppImage`, make it executable, run:
+Download `tuxkitchen_0.1.4_amd64.AppImage`, make it executable, run:
 
 ```sh
-chmod +x tuxkitchen_0.1.3_amd64.AppImage
-./tuxkitchen_0.1.3_amd64.AppImage
+chmod +x tuxkitchen_0.1.4_amd64.AppImage
+./tuxkitchen_0.1.4_amd64.AppImage
 ```
 
 The kitchen drives **your system's** tooling — run the built-in **Tools**

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { openPath } from "@tauri-apps/plugin-opener";
 import {
   Folder, FolderOpen, FileCode, ChevronRight, CornerLeftUp,
   Pencil, Trash2, ScanSearch, Hammer,
@@ -35,6 +36,7 @@ export function FilesView({ activeProject }: FilesViewProps) {
   const [entries, setEntries] = useState<EntryInfo[]>([]);
   const [selected, setSelected] = useState<EntryInfo | null>(null);
   const [probe, setProbe] = useState<ProbeResult | null>(null);
+  const [filter, setFilter] = useState("");
 
   useEffect(() => {
     if (activeProject) {
@@ -140,11 +142,36 @@ export function FilesView({ activeProject }: FilesViewProps) {
   const crumbs = rel ? rel.split("/") : [];
   const wsName = (workspace ?? "").split("/").filter(Boolean).pop() || "workspace";
   const hereHasApktool = entries.some((e) => e.name === "apktool.yml");
+  const visibleEntries = filter.trim()
+    ? entries.filter((e) => e.name.toLowerCase().includes(filter.trim().toLowerCase()))
+    : entries;
+
+  const revealWorkspace = async () => {
+    if (!workspace) return;
+    try {
+      await openPath(workspace);
+    } catch (e) {
+      toast.error(`Could not open file manager: ${e}`);
+    }
+  };
 
   return (
     <div className="flex-col">
       <div className="md-card">
-        <div className="md-card-title">Workspace Files</div>
+        <div className="flex-row" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+          <div className="md-card-title" style={{ margin: 0 }}>Workspace Files</div>
+          <div className="flex-row" style={{ gap: 8 }}>
+            <input
+              placeholder="filter this folder..."
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              style={{ maxWidth: 220 }}
+            />
+            <button className="secondary" onClick={revealWorkspace} title="Open the workspace in your file manager">
+              Reveal
+            </button>
+          </div>
+        </div>
         {!workspace ? (
           <p style={{ color: "var(--md-sys-color-outline)" }}>Open a project first.</p>
         ) : (
@@ -183,7 +210,7 @@ export function FilesView({ activeProject }: FilesViewProps) {
                 <span style={{ fontSize: 14 }}>.</span>
               </div>
             )}
-            {entries.map((e) => (
+            {visibleEntries.map((e) => (
               <div
                 key={e.name}
                 className="flex-row"
@@ -208,8 +235,10 @@ export function FilesView({ activeProject }: FilesViewProps) {
                 </span>
               </div>
             ))}
-            {entries.length === 0 && (
-              <p style={{ color: "var(--md-sys-color-outline)" }}>Empty directory.</p>
+            {visibleEntries.length === 0 && (
+              <p style={{ color: "var(--md-sys-color-outline)" }}>
+                {filter ? "Nothing matches the filter." : "Empty directory."}
+              </p>
             )}
           </div>
         </div>

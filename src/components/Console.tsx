@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
-import { getLogs, getSeq, subscribeLogs, } from "../lib/logStore";
+import { getLogs, getSeq, subscribeLogs, clearLogs } from "../lib/logStore";
 import { useSyncExternalStore } from "react";
+import { Eraser } from "lucide-react";
 
 function logClass(line: string): string {
   if (line.includes("[Error]") || line.includes("[err]")) return "log-err";
@@ -41,6 +42,13 @@ export function Console() {
 
   return (
     <div className="console-container" onScroll={onScroll}>
+      <button
+        className="icon-btn console-clear"
+        title="Clear log"
+        onClick={() => clearLogs()}
+      >
+        <Eraser size={16} />
+      </button>
       {logs.map((log, index) => (
         <div key={index} className={logClass(log)}>{log}</div>
       ))}
