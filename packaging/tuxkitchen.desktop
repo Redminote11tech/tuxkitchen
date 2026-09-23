@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=TuxKitchen
+Comment=Experimental Android ROM kitchen
+Exec=tuxkitchen
+Icon=tuxkitchen
+Terminal=false
+Categories=Development;
+StartupWMClass=tuxkitchen

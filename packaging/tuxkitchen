@@ -1,0 +1,4 @@
+#!/bin/sh
+# Match the project's existing WebKit/NVIDIA renderer workaround.
+export WEBKIT_DISABLE_DMABUF_RENDERER="${WEBKIT_DISABLE_DMABUF_RENDERER:-1}"
+exec /usr/lib/tuxkitchen/tuxkitchen "$@"

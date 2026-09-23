@@ -1,0 +1,44 @@
+# Local source package: run ./build-package.sh from this directory.
+# No upstream URL or redistribution license has been supplied.
+pkgname=tuxkitchen
+pkgver=0.1.0
+pkgrel=4
+pkgdesc='Experimental Android ROM kitchen desktop application'
+arch=('x86_64')
+depends=('glibc' 'gcc-libs' 'gtk3' 'webkit2gtk-4.1' 'libsoup3' 'openssl' 'bash' 'unzip' 'zip' 'tar' 'lz4' 'e2fsprogs' 'xz' 'bzip2' 'zstd')
+optdepends=(
+  'android-tools: sparse conversion, super extraction/build, payload partition images (note: the e2fsdroid build currently rejects valid ext4 images; TuxKitchen falls back to debugfs from e2fsprogs)'
+  '7zip: 7z archives and ext4 image extraction'
+  'brotli: Brotli decompression'
+  'erofs-utils: EROFS extraction and image creation'
+  'f2fs-tools: F2FS image creation and population'
+  'smali: baksmali/smali for deodexing (AUR)'
+  'magiskboot: boot image unpacking, repacking and Magisk patching (AUR)'
+  'avbtool: verify patched vbmeta images'
+)
+# Retain the local build cache; do not create a separate debug package.
+options=('!debug')
+source=("tuxkitchen-${pkgver}.tar.gz")
+sha256sums=('SKIP')
+
+prepare() {
+  cd "$srcdir/tuxkitchen-$pkgver"
+  bun install --frozen-lockfile
+  cargo fetch --locked --manifest-path src-tauri/Cargo.toml
+}
+
+build() {
+  cd "$srcdir/tuxkitchen-$pkgver"
+  export CARGO_TARGET_DIR="$srcdir/target"
+  bun run tauri build --no-bundle -- --locked --offline
+}
+
+package() {
+  cd "$srcdir/tuxkitchen-$pkgver"
+  install -Dm755 "$srcdir/target/release/tuxkitchen" "$pkgdir/usr/lib/tuxkitchen/tuxkitchen"
+  install -Dm755 packaging/tuxkitchen "$pkgdir/usr/bin/tuxkitchen"
+  install -Dm644 packaging/tuxkitchen.desktop "$pkgdir/usr/share/applications/tuxkitchen.desktop"
+  install -Dm644 src-tauri/icons/32x32.png "$pkgdir/usr/share/icons/hicolor/32x32/apps/tuxkitchen.png"
+  install -Dm644 src-tauri/icons/128x128.png "$pkgdir/usr/share/icons/hicolor/128x128/apps/tuxkitchen.png"
+  install -Dm644 src-tauri/icons/128x128@2x.png "$pkgdir/usr/share/icons/hicolor/256x256/apps/tuxkitchen.png"
+}

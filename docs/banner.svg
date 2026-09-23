@@ -1,0 +1,32 @@
+<svg width="1200" height="300" viewBox="0 0 1200 300" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="TuxKitchen banner">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1c1b1f"/>
+      <stop offset="1" stop-color="#2b2535"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#d0bcff"/>
+      <stop offset="1" stop-color="#7fdbca"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="300" rx="24" fill="url(#bg)"/>
+  <rect x="1" y="1" width="1198" height="298" rx="23" stroke="#4f378b" stroke-opacity="0.55" stroke-width="2"/>
+
+  <!-- terminal window -->
+  <rect x="90" y="72" width="220" height="156" rx="14" fill="#121016" stroke="#49454f" stroke-width="2"/>
+  <circle cx="114" cy="94" r="6" fill="#f2b8b5"/>
+  <circle cx="134" cy="94" r="6" fill="#e8def8"/>
+  <circle cx="154" cy="94" r="6" fill="#7fdbca"/>
+  <text x="112" y="130" font-family="ui-monospace, 'Courier New', monospace" font-size="15" fill="#938f99">$</text>
+  <text x="128" y="130" font-family="ui-monospace, 'Courier New', monospace" font-size="15" fill="#d0bcff">tuxkitchen</text>
+  <rect x="112" y="144" width="150" height="8" rx="4" fill="#49454f"/>
+  <rect x="112" y="162" width="110" height="8" rx="4" fill="#3a3543"/>
+  <rect x="112" y="180" width="170" height="8" rx="4" fill="#3a3543"/>
+  <text x="112" y="216" font-family="ui-monospace, 'Courier New', monospace" font-size="13" fill="#7fdbca">root:root · labeled · bootable</text>
+
+  <!-- wordmark -->
+  <text x="370" y="150" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="84" fill="#e6e1e5" letter-spacing="1">Tux</text>
+  <text x="513" y="150" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="84" fill="url(#accent)" letter-spacing="1">Kitchen</text>
+  <text x="372" y="196" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-weight="400" font-size="26" fill="#cac4d0">A free &amp; open Android ROM kitchen for Linux</text>
+  <text x="372" y="230" font-family="ui-monospace, 'Courier New', monospace" font-size="17" fill="#938f99">unpack · edit · label · build · package — no Python, no WSL</text>
+</svg>
