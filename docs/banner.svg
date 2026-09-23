@@ -31,10 +31,10 @@
   <text x="372" y="230" font-family="ui-monospace, 'Courier New', monospace" font-size="17" fill="#938f99">unpack · edit · label · build · package — no Python, no WSL</text>
 
   <!-- claim chips -->
-  <rect x="372" y="248" width="96" height="28" rx="14" fill="#4f378b"/>
-  <text x="392" y="267" font-family="ui-monospace, 'Courier New', monospace" font-size="14" fill="#eaddff">root:root</text>
-  <rect x="480" y="248" width="150" height="28" rx="14" fill="#4f378b"/>
-  <text x="498" y="267" font-family="ui-monospace, 'Courier New', monospace" font-size="14" fill="#eaddff">SELinux labeled</text>
-  <rect x="642" y="248" width="82" height="28" rx="14" fill="#4f378b"/>
+  <rect x="372" y="248" width="108" height="28" rx="14" fill="#4f378b"/>
+  <text x="390" y="267" font-family="ui-monospace, 'Courier New', monospace" font-size="14" fill="#eaddff">root:root</text>
+  <rect x="492" y="248" width="150" height="28" rx="14" fill="#4f378b"/>
+  <text x="510" y="267" font-family="ui-monospace, 'Courier New', monospace" font-size="14" fill="#eaddff">SELinux labeled</text>
+  <rect x="654" y="248" width="82" height="28" rx="14" fill="#4f378b"/>
   <text x="662" y="267" font-family="ui-monospace, 'Courier New', monospace" font-size="14" fill="#eaddff">boots</text>
 </svg>
