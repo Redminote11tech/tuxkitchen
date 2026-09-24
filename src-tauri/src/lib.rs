@@ -16,6 +16,7 @@ mod props;
 mod browse;
 mod ikconfig;
 mod sdat;
+mod compare;
 
 #[tauri::command]
 async fn unpack_rom(app_handle: AppHandle, file_path: String, workspace_path: String) -> Result<(), String> {
@@ -115,7 +116,8 @@ pub fn run() {
             browse::apktool_decompile,
             browse::apktool_recompile,
             ikconfig::read_kernel_config,
-            sdat::sdat_to_img
+            sdat::sdat_to_img,
+            compare::compare_trees
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

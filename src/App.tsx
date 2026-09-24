@@ -11,6 +11,7 @@ import { LegacyView } from "./views/LegacyView";
 import { ToolsView } from "./views/ToolsView";
 import { FilesView } from "./views/FilesView";
 import { PropsView } from "./views/PropsView";
+import { CompareView } from "./views/CompareView";
 import { Toasts } from "./components/Toasts";
 import { TitleBar } from "./components/TitleBar";
 import "./index.css";
@@ -34,6 +35,8 @@ function App() {
         return <FilesView activeProject={activeProject} />;
       case "Props":
         return <PropsView activeProject={activeProject} />;
+      case "Compare":
+        return <CompareView activeProject={activeProject} />;
       case "Partitions":
         return <PartitionsView activeProject={activeProject} />;
       case "Debloat":
