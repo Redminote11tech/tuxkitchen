@@ -62,6 +62,7 @@ flowchart LR
 | **super.img** | `lpmake` build that reads the stock layout with `lpdump` (group name, metadata slots) and logs the per-partition budget before building |
 | **Package** | Odin `.tar` and `.tar.md5` (MD5 appended exactly the way Odin verifies), raw ⇄ sparse, lz4, and `NEW.DAT` transfer-list reconstruction (full-image lists; incremental OTA lists are rejected honestly) |
 | **Compare** | Two trees walked path by path — stock extract vs your edits, or two firmware releases. Same-size files compared byte for byte; statuses filterable; honest about what it does not do (no jar/dex or metadata diffs) |
+| **Device** | ADB and fastboot detection, device properties, bootloader variables (slot, lock state, fastbootd, partition sizes), reboots into bootloader / fastbootd / recovery / download. Flashing is guarded: identity partitions refused outright, bootloader chain behind explicit opt-in, image-vs-partition size checks, dynamic partitions require fastbootd |
 | **Debloat** | App list with real directory sizes; removal moves apps into a restorable project backup; recursive deodex that finds `oat/<isa>/` layouts and clears stale `.vdex` / `.art` |
 | **build.prop editor** | Auto-detects every prop file in the workspace; table editing with a raw mode; comments and blanks survive every save; a `.prop.bak` of the previous version is kept alongside |
 | **File browser** | Breadcrumb navigation through the extracted ROM; click a file to identify it by signature; rename and delete (delete moves into the restorable backup) |
@@ -89,12 +90,12 @@ This is verified by tests that build a real image and read it back with
 
 ### CachyOS / Arch Linux — package
 
-Grab `tuxkitchen-0.1.6-1-x86_64.pkg.tar.zst` from
+Grab `tuxkitchen-0.2.0-1-x86_64.pkg.tar.zst` from
 [Releases](https://github.com/Redminote11tech/tuxkitchen/releases) (or build it
 yourself), then:
 
 ```sh
-sudo pacman -U tuxkitchen-0.1.6-1-x86_64.pkg.tar.zst
+sudo pacman -U tuxkitchen-0.2.0-1-x86_64.pkg.tar.zst
 tuxkitchen
 ```
 
@@ -106,11 +107,11 @@ you trade the glitch for slower scrolling.
 
 ### AppImage — any distro
 
-Download `tuxkitchen_0.1.6_amd64.AppImage`, make it executable, run:
+Download `tuxkitchen_0.2.0_amd64.AppImage`, make it executable, run:
 
 ```sh
-chmod +x tuxkitchen_0.1.6_amd64.AppImage
-./tuxkitchen_0.1.6_amd64.AppImage
+chmod +x tuxkitchen_0.2.0_amd64.AppImage
+./tuxkitchen_0.2.0_amd64.AppImage
 ```
 
 The kitchen drives **your system's** tooling — run the built-in **Tools**

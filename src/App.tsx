@@ -12,6 +12,7 @@ import { ToolsView } from "./views/ToolsView";
 import { FilesView } from "./views/FilesView";
 import { PropsView } from "./views/PropsView";
 import { CompareView } from "./views/CompareView";
+import { DeviceView } from "./views/DeviceView";
 import { Toasts } from "./components/Toasts";
 import { TitleBar } from "./components/TitleBar";
 import "./index.css";
@@ -49,6 +50,8 @@ function App() {
         return <LegacyView activeProject={activeProject} />;
       case "Tools":
         return <ToolsView />;
+      case "Device":
+        return <DeviceView />;
       case "Logs":
         return <Console />;
       default:

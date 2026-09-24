@@ -17,6 +17,7 @@ mod browse;
 mod ikconfig;
 mod sdat;
 mod compare;
+mod device;
 
 #[tauri::command]
 async fn unpack_rom(app_handle: AppHandle, file_path: String, workspace_path: String) -> Result<(), String> {
@@ -117,7 +118,15 @@ pub fn run() {
             browse::apktool_recompile,
             ikconfig::read_kernel_config,
             sdat::sdat_to_img,
-            compare::compare_trees
+            compare::compare_trees,
+            device::adb_devices,
+            device::fastboot_devices,
+            device::adb_device_info,
+            device::fastboot_device_vars,
+            device::adb_reboot,
+            device::fastboot_reboot,
+            device::flash_plan,
+            device::flash_image
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

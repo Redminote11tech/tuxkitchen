@@ -1,7 +1,7 @@
 # Local source package: run ./build-package.sh from this directory.
 # No upstream URL or redistribution license has been supplied.
 pkgname=tuxkitchen
-pkgver=0.1.6
+pkgver=0.2.0
 pkgrel=1
 pkgdesc='Experimental Android ROM kitchen desktop application'
 arch=('x86_64')
