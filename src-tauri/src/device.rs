@@ -237,18 +237,34 @@ pub struct FlashPlan {
     pub partition_size: Option<u64>,
     pub dynamic: bool,
     pub userspace_fastboot: Option<bool>,
-    pub bootloader_opt_in: bool,
-    /// Empty when the flash may proceed; otherwise the reason it is refused.
-    pub refusal: Option<String>,
+    pub identity: bool,
+    pub bootloader: bool,
+    /// Facts worth reading before proceeding.
+    pub warnings: Vec<String>,
+    /// Operations that cannot physically succeed right now - the flash
+    /// button stays disabled.
+    pub blockers: Vec<String>,
+    /// Risk acknowledgements the user must check before the button appears.
+    pub unacknowledged: Vec<String>,
 }
 
 /// Build the flash decision without touching the device: every check is
 /// visible to the user before anything is written.
+///
+/// Policy: the tool informs and requires explicit acknowledgement, it does
+/// not decide for the user - this is a power-user tool, and hard blocks
+/// would be inconsistent with the custom-script and kernel-patching
+/// capabilities it already has. The one exception is an operation that
+/// cannot succeed at all (image larger than the partition): fastboot would
+/// fail mid-write, which is the worst possible failure mode, so the plan
+/// blocks it up front.
 fn plan_flash(
     partition: &str,
     image: &str,
     vars: &[(String, String)],
     bootloader_opt_in: bool,
+    identity_opt_in: bool,
+    dynamic_ack: bool,
 ) -> Result<FlashPlan, String> {
     let image_path = Path::new(image);
     if !image_path.is_file() {
@@ -256,6 +272,8 @@ fn plan_flash(
     }
     let image_size = std::fs::metadata(image_path).map_err(|e| e.to_string())?.len();
     let dynamic = is_dynamic_partition(partition);
+    let identity = is_identity_partition(partition);
+    let bootloader = is_bootloader_partition(partition);
     let userspace_fastboot = vars
         .iter()
         .find(|(k, _)| k == "is-userspace")
@@ -265,30 +283,56 @@ fn plan_flash(
         .find(|(k, _)| k == &format!("partition-size:{}", partition))
         .and_then(|(_, v)| parse_hex_size(v));
 
-    let mut refusal: Option<String> = None;
-    if is_identity_partition(partition) {
-        refusal = Some(format!(
-            "{} holds device identity or radio state - this tool refuses to write it, no override exists",
-            partition
-        ));
-    } else if is_bootloader_partition(partition) && !bootloader_opt_in {
-        refusal = Some(format!(
-            "{} is part of the bootloader chain - flashing a bad image here can permanently brick the device; opt in explicitly if you accept that",
-            partition
-        ));
-    } else if dynamic && userspace_fastboot != Some(true) {
-        refusal = Some(format!(
-            "{} is a dynamic partition inside super - reboot to fastbootd first (it runs from userspace); bootloader fastboot cannot write it",
-            partition
-        ));
-    } else if let Some(psize) = partition_size {
+    let mut warnings = Vec::new();
+    let mut blockers = Vec::new();
+    let mut unacknowledged = Vec::new();
+
+    if let Some(psize) = partition_size {
         if image_size > psize {
-            refusal = Some(format!(
-                "image ({} bytes) is larger than partition {} ({} bytes)",
+            blockers.push(format!(
+                "image ({} bytes) is larger than partition {} ({} bytes) - fastboot would fail mid-write",
                 image_size,
                 partition,
                 psize
             ));
+        }
+    }
+
+    if identity {
+        if identity_opt_in {
+            warnings.push(format!(
+                "IDENTITY PARTITION OVERRIDE: {} holds IMEI/radio/calibration state. Without a backup of this exact partition, overwriting it may permanently lose it.",
+                partition
+            ));
+        } else {
+            unacknowledged.push(format!(
+                "{} holds device identity/radio state (IMEI, calibration). Overwriting it without a backup cannot be undone - nothing can put it back. Proceed only with your own backup of this partition.",
+                partition
+            ));
+        }
+    }
+    if bootloader {
+        if bootloader_opt_in {
+            warnings.push(format!(
+                "BOOTLOADER CHAIN OVERRIDE: a bad write to {} can permanently brick the device.",
+                partition
+            ));
+        } else {
+            unacknowledged.push(format!(
+                "{} is part of the bootloader chain - a bad write here can permanently brick the device.",
+                partition
+            ));
+        }
+    }
+    if dynamic && userspace_fastboot != Some(true) {
+        let note = format!(
+            "{} is a dynamic partition and the device is in bootloader fastboot - most devices need fastbootd for this; fastboot will error immediately if this one does not support it.",
+            partition
+        );
+        if dynamic_ack {
+            warnings.push(note);
+        } else {
+            unacknowledged.push(note);
         }
     }
 
@@ -299,8 +343,11 @@ fn plan_flash(
         partition_size,
         dynamic,
         userspace_fastboot,
-        bootloader_opt_in,
-        refusal,
+        identity,
+        bootloader,
+        warnings,
+        blockers,
+        unacknowledged,
     })
 }
 
@@ -309,11 +356,20 @@ pub async fn flash_plan(
     partition: String,
     image: String,
     bootloader_opt_in: bool,
+    identity_opt_in: bool,
+    dynamic_ack: bool,
 ) -> Result<FlashPlan, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let text = run_capture("fastboot", &["getvar", "all"])?;
         let vars = parse_fastboot_vars(&text);
-        plan_flash(&partition, &image, &vars, bootloader_opt_in)
+        plan_flash(
+            &partition,
+            &image,
+            &vars,
+            bootloader_opt_in,
+            identity_opt_in,
+            dynamic_ack,
+        )
     })
     .await
     .map_err(|e| e.to_string())?
@@ -325,14 +381,25 @@ pub async fn flash_image(
     partition: String,
     image: String,
     bootloader_opt_in: bool,
+    identity_opt_in: bool,
+    dynamic_ack: bool,
 ) -> Result<(), String> {
     let app = app_handle.clone();
     tauri::async_runtime::spawn_blocking(move || {
         let text = run_capture("fastboot", &["getvar", "all"])?;
         let vars = parse_fastboot_vars(&text);
-        let plan = plan_flash(&partition, &image, &vars, bootloader_opt_in)?;
-        if let Some(reason) = &plan.refusal {
-            return Err(format!("flash refused: {}", reason));
+        let plan = plan_flash(&partition, &image, &vars, bootloader_opt_in, identity_opt_in, dynamic_ack)?;
+        if !plan.blockers.is_empty() {
+            return Err(format!("flash impossible: {}", plan.blockers.join("; ")));
+        }
+        if !plan.unacknowledged.is_empty() {
+            return Err(format!(
+                "unacknowledged risks (confirm them in the UI): {}",
+                plan.unacknowledged.join("; ")
+            ));
+        }
+        for w in &plan.warnings {
+            log(&app, format!("[Flash] {}", w));
         }
         log(&app, format!(
             "[Flash] writing {} ({} bytes) to {}{}",
@@ -384,7 +451,7 @@ mod tests {
     }
 
     #[test]
-    fn bootloader_chain_needs_opt_in_and_dynamic_needs_fastbootd() {
+    fn risky_partitions_need_acknowledgement_not_refusal() {
         assert!(is_bootloader_partition("xbl_a"));
         assert!(is_bootloader_partition("keymaster"));
         assert!(!is_bootloader_partition("boot"));
@@ -397,37 +464,53 @@ mod tests {
         std::fs::write(&tmp, vec![0u8; 16]).unwrap();
         let img = tmp.to_string_lossy().into_owned();
 
+        // Clean case: nothing risky, nothing asked.
         let vars = vec![
             ("is-userspace".to_string(), "yes".to_string()),
             ("partition-size:system_a".to_string(), format!("{:#x}", 4096)),
         ];
-        let plan = plan_flash("system_a", &img, &vars, false).unwrap();
-        assert!(plan.refusal.is_none(), "fastbootd + fitting image should pass: {:?}", plan.refusal);
+        let plan = plan_flash("system_a", &img, &vars, false, false, false).unwrap();
+        assert!(plan.blockers.is_empty() && plan.unacknowledged.is_empty() && plan.warnings.is_empty());
 
+        // Dynamic partition from bootloader fastboot: acknowledged warning,
+        // never a refusal - some bootloaders do support it.
         let vars_bl = vec![("is-userspace".to_string(), "no".to_string())];
-        let plan = plan_flash("system_a", &img, &vars_bl, false).unwrap();
-        assert!(plan.refusal.unwrap().contains("fastbootd"));
+        let plan = plan_flash("system_a", &img, &vars_bl, false, false, false).unwrap();
+        assert!(plan.blockers.is_empty());
+        assert!(plan.unacknowledged.iter().any(|m| m.contains("fastbootd")));
+        let plan = plan_flash("system_a", &img, &vars_bl, false, false, true).unwrap();
+        assert!(plan.unacknowledged.is_empty());
+        assert!(plan.warnings.iter().any(|m| m.contains("fastbootd")));
 
-        let plan = plan_flash("xbl", &img, &vars_bl, false).unwrap();
-        assert!(plan.refusal.unwrap().contains("bootloader chain"));
+        // Bootloader chain: unacknowledged until opted in.
+        let plan = plan_flash("xbl", &img, &vars_bl, false, false, true).unwrap();
+        assert!(plan.unacknowledged.iter().any(|m| m.contains("bootloader chain")));
+        let plan = plan_flash("xbl", &img, &vars_bl, true, false, true).unwrap();
+        assert!(plan.unacknowledged.is_empty());
+        assert!(plan.warnings.iter().any(|m| m.contains("BOOTLOADER CHAIN OVERRIDE")));
 
-        let plan = plan_flash("xbl", &img, &vars_bl, true).unwrap();
-        assert!(plan.refusal.is_none(), "explicit opt-in may proceed");
+        // Identity partitions: same model, stronger wording.
+        let vars_persist = vec![];
+        let plan = plan_flash("persist", &img, &vars_persist, false, false, false).unwrap();
+        assert!(plan.identity);
+        assert!(plan.unacknowledged.iter().any(|m| m.contains("cannot be undone")));
+        let plan = plan_flash("persist", &img, &vars_persist, false, true, false).unwrap();
+        assert!(plan.unacknowledged.is_empty());
+        assert!(plan.warnings.iter().any(|m| m.contains("IDENTITY PARTITION OVERRIDE")));
 
         std::fs::remove_file(&tmp).unwrap();
     }
 
     #[test]
-    fn oversized_images_are_refused() {
+    fn oversized_images_block_even_with_every_opt_in() {
         let vars = vec![
             ("is-userspace".to_string(), "yes".to_string()),
             ("partition-size:boot_a".to_string(), "0x400".to_string()),
         ];
-        // /dev/null reports size 0, so use a real small file vs tiny limit.
         let tmp = std::env::temp_dir().join(format!("tk-flash-{}", std::process::id()));
         std::fs::write(&tmp, vec![0u8; 1025]).unwrap();
-        let plan = plan_flash("boot_a", &tmp.to_string_lossy(), &vars, false).unwrap();
-        assert!(plan.refusal.unwrap().contains("larger than partition"));
+        let plan = plan_flash("boot_a", &tmp.to_string_lossy(), &vars, true, true, true).unwrap();
+        assert!(plan.blockers.iter().any(|m| m.contains("larger than partition")));
         std::fs::remove_file(&tmp).unwrap();
     }
 }

@@ -17,8 +17,11 @@ interface FlashPlan {
   partition_size: number | null;
   dynamic: boolean;
   userspace_fastboot: boolean | null;
-  bootloader_opt_in: boolean;
-  refusal: string | null;
+  identity: boolean;
+  bootloader: boolean;
+  warnings: string[];
+  blockers: string[];
+  unacknowledged: string[];
 }
 
 function fmt(bytes: number | null): string {
@@ -48,8 +51,9 @@ export function DeviceView() {
 
   const [partition, setPartition] = useState("");
   const [image, setImage] = useState<string | null>(null);
-  const [blOptIn, setBlOptIn] = useState(false);
   const [plan, setPlan] = useState<FlashPlan | null>(null);
+  const [acks, setAcks] = useState<string[]>([]);
+  const [typedName, setTypedName] = useState("");
 
   const scan = async () => {
     await runBusy("Scanning for devices", async () => {
@@ -126,19 +130,49 @@ export function DeviceView() {
     }
     try {
       await runBusy("Building flash plan", () =>
-        invoke<FlashPlan>("flash_plan", { partition: partition.trim(), image, bootloaderOptIn: blOptIn }),
-      ).then(setPlan);
+        invoke<FlashPlan>("flash_plan", {
+          partition: partition.trim(),
+          image,
+          bootloaderOptIn: false,
+          identityOptIn: false,
+          dynamicAck: false,
+        }),
+      ).then((p) => {
+        setPlan(p);
+        setAcks([]);
+        setTypedName("");
+      });
     } catch (e) {
       toast.error(`Plan failed: ${e}`);
     }
   };
 
+  const acknowledge = (msg: string) => {
+    setAcks((a) => (a.includes(msg) ? a : [...a, msg]));
+  };
+  const allAcknowledged = plan ? plan.unacknowledged.every((m) => acks.includes(m)) : false;
+  const identityConfirmOk = !plan?.identity || typedName.trim() === plan.partition.trim();
+  const readyToFlash =
+    plan !== null && plan.blockers.length === 0 && allAcknowledged && identityConfirmOk;
+
   const doFlash = async () => {
-    if (!plan || plan.refusal) return;
-    if (!confirm(`CONFIRM: write ${plan.image.split("/").pop()} (${fmt(plan.image_size)}) to partition "${plan.partition}"?\n\nA wrong image or interrupted write can leave a device that does not start.`)) return;
+    if (!plan || !readyToFlash) return;
+    if (
+      !confirm(
+        `CONFIRM: write ${plan.image.split("/").pop()} (${fmt(plan.image_size)}) to partition "${plan.partition}"?\n\nA wrong image or interrupted write can leave a device that does not start.` +
+          (plan.identity ? "\n\nThis is an IDENTITY partition - without a backup of it, the write may be irreversible." : ""),
+      )
+    )
+      return;
     try {
       await runBusy(`Flashing ${plan.partition}`, () =>
-        invoke("flash_image", { partition: plan.partition, image: plan.image, bootloaderOptIn: blOptIn }),
+        invoke("flash_image", {
+          partition: plan.partition,
+          image: plan.image,
+          bootloaderOptIn: plan.bootloader,
+          identityOptIn: plan.identity,
+          dynamicAck: plan.dynamic && plan.userspace_fastboot !== true,
+        }),
       );
       toast.success(`${plan.partition} written.`);
       setPlan(null);
@@ -246,11 +280,11 @@ export function DeviceView() {
           Flash an image (fastboot only) — experimental
         </div>
         <p style={{ marginTop: 12, fontSize: 13, lineHeight: 1.6 }}>
-          Identity and radio partitions (<code>modemst*</code>, <code>persist</code>, <code>efs</code>, <code>nvdata</code>, …)
-          are <strong>refused outright</strong> — nothing could put them back. Bootloader-chain partitions
-          (<code>xbl</code>, <code>abl</code>, <code>tz</code>, …) need the explicit opt-in below. Dynamic
-          partitions (system/vendor/product/odm) require <strong>fastbootd</strong>, not bootloader fastboot.
-          Images larger than the target partition are refused.
+          The plan tells you what it found — identity/radio partitions, the bootloader chain,
+          fastbootd requirements for dynamic partitions, size fit — and asks you to acknowledge the
+          risks explicitly. Nothing is hard-blocked here: it is your device. The one exception is an
+          image larger than its partition, which physically cannot flash (fastboot would fail
+          mid-write). A wrong image or interrupted write can still leave a device that does not start.
         </p>
         <div className="flex-row mt-4" style={{ flexWrap: "wrap" }}>
           <div className="flex-col" style={{ gap: 6, flexGrow: 1, minWidth: 200 }}>
@@ -265,32 +299,67 @@ export function DeviceView() {
             </div>
           </div>
         </div>
-        <label className="flex-row" style={{ gap: 8, marginTop: 12, fontSize: 14 }}>
-          <input type="checkbox" checked={blOptIn} onChange={(e) => { setBlOptIn(e.target.checked); setPlan(null); }} />
-          I accept the risk of flashing bootloader-chain partitions
-        </label>
         <div style={{ marginTop: 14 }}>
           <button className="secondary" onClick={planFlash}>Build flash plan</button>
         </div>
         {plan && (
           <div className="md-card probe-card" style={{ marginTop: 14 }}>
             <div className="flex-row" style={{ flexWrap: "wrap", gap: 10, alignItems: "center" }}>
-              <Smartphone size={18} color={plan.refusal ? "var(--md-sys-color-error)" : "var(--md-sys-color-primary)"} />
-              <span className={`chip ${plan.refusal ? "chip-warn" : "chip-ok"}`}>
-                {plan.refusal ? "refused" : "ready"}
+              <Smartphone size={18} color={plan.blockers.length > 0 ? "var(--md-sys-color-error)" : "var(--md-sys-color-primary)"} />
+              <span className={`chip ${plan.blockers.length > 0 ? "chip-warn" : readyToFlash ? "chip-ok" : ""}`}>
+                {plan.blockers.length > 0 ? "impossible" : readyToFlash ? "ready" : "needs acknowledgement"}
               </span>
               <span style={{ fontSize: 13 }}>
                 {plan.partition}: {fmt(plan.image_size)} → partition {fmt(plan.partition_size)}
-                {plan.dynamic ? " (dynamic, fastbootd)" : ""}
+                {plan.dynamic ? " (dynamic)" : ""}
               </span>
             </div>
-            {plan.refusal ? (
-              <p style={{ marginTop: 10, fontSize: 13, color: "var(--md-sys-color-error)" }}>{plan.refusal}</p>
-            ) : (
-              <div style={{ marginTop: 10 }}>
-                <button className="primary" style={{ backgroundColor: "#B3261E", color: "white" }} onClick={doFlash}>
+            {plan.warnings.map((w) => (
+              <p key={w} style={{ marginTop: 10, fontSize: 13, color: "var(--md-sys-color-error)" }}>{w}</p>
+            ))}
+            {plan.blockers.map((b) => (
+              <p key={b} style={{ marginTop: 10, fontSize: 13, color: "var(--md-sys-color-error)", fontWeight: 500 }}>{b}</p>
+            ))}
+            {plan.unacknowledged.map((m) => (
+              <label key={m} className="flex-row" style={{ gap: 8, marginTop: 10, fontSize: 13, alignItems: "flex-start" }}>
+                <input
+                  type="checkbox"
+                  style={{ marginTop: 3 }}
+                  checked={acks.includes(m)}
+                  onChange={(e) => (e.target.checked ? acknowledge(m) : setAcks((a) => a.filter((x) => x !== m)))}
+                />
+                <span>{m}</span>
+              </label>
+            ))}
+            {plan.identity && (
+              <div className="flex-row" style={{ gap: 8, marginTop: 12 }}>
+                <input
+                  value={typedName}
+                  onChange={(e) => setTypedName(e.target.value)}
+                  placeholder={`type "${plan.partition}" to confirm`}
+                  style={{ maxWidth: 280, fontFamily: "monospace" }}
+                />
+              </div>
+            )}
+            {plan.blockers.length === 0 && (
+              <div style={{ marginTop: 12 }}>
+                <button
+                  className="primary"
+                  style={{ backgroundColor: readyToFlash ? "#B3261E" : undefined, color: readyToFlash ? "white" : undefined, opacity: readyToFlash ? 1 : 0.5, cursor: readyToFlash ? "pointer" : "not-allowed" }}
+                  onClick={doFlash}
+                  disabled={!readyToFlash}
+                >
                   Flash {plan.partition} now
                 </button>
+                {!readyToFlash && (
+                  <span style={{ marginLeft: 12, fontSize: 12, color: "var(--md-sys-color-outline)" }}>
+                    {plan.blockers.length > 0
+                      ? "blocked by the plan above"
+                      : plan.identity && !identityConfirmOk
+                        ? "type the partition name to enable"
+                        : "acknowledge the risks above to enable"}
+                  </span>
+                )}
               </div>
             )}
           </div>
