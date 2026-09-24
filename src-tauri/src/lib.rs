@@ -18,6 +18,8 @@ mod ikconfig;
 mod sdat;
 mod compare;
 mod device;
+mod cpio;
+mod signing;
 
 #[tauri::command]
 async fn unpack_rom(app_handle: AppHandle, file_path: String, workspace_path: String) -> Result<(), String> {
@@ -126,7 +128,10 @@ pub fn run() {
             device::adb_reboot,
             device::fastboot_reboot,
             device::flash_plan,
-            device::flash_image
+            device::flash_image,
+            cpio::ramdisk_extract,
+            cpio::ramdisk_repack,
+            signing::sign_apk
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

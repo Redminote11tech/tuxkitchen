@@ -66,7 +66,8 @@ flowchart LR
 | **Debloat** | App list with real directory sizes; removal moves apps into a restorable project backup; recursive deodex that finds `oat/<isa>/` layouts and clears stale `.vdex` / `.art` |
 | **build.prop editor** | Auto-detects every prop file in the workspace; table editing with a raw mode; comments and blanks survive every save; a `.prop.bak` of the previous version is kept alongside |
 | **File browser** | Breadcrumb navigation through the extracted ROM; click a file to identify it by signature; rename and delete (delete moves into the restorable backup) |
-| **APK tooling** | Decompile / recompile with `apktool` straight from the file browser |
+| **APK tooling** | Decompile / recompile with `apktool`, and **sign** the result (v1+v2+v3 via uber-apk-signer) — unsigned apktool output cannot install; signing is one click from the file browser |
+| **Ramdisk editing** | Extract `ramdisk.cpio` into an editable folder straight from a boot unpack, edit via the Files browser (fstab, init.rc, …), rebuild — untouched entries keep their original ownership, modes and timestamps because the archive is patched, not regenerated. A pristine copy is kept as `ramdisk.orig.cpio` |
 | **Workflow** | Projects with their own workspaces, a persistent global console, toast notifications, a busy indicator for long operations, and a Tools screen that maps every missing dependency to its install command |
 
 ## The metadata story
@@ -90,12 +91,12 @@ This is verified by tests that build a real image and read it back with
 
 ### CachyOS / Arch Linux — package
 
-Grab `tuxkitchen-0.2.1-1-x86_64.pkg.tar.zst` from
+Grab `tuxkitchen-0.3.0-1-x86_64.pkg.tar.zst` from
 [Releases](https://github.com/Redminote11tech/tuxkitchen/releases) (or build it
 yourself), then:
 
 ```sh
-sudo pacman -U tuxkitchen-0.2.1-1-x86_64.pkg.tar.zst
+sudo pacman -U tuxkitchen-0.3.0-1-x86_64.pkg.tar.zst
 tuxkitchen
 ```
 
@@ -107,11 +108,11 @@ you trade the glitch for slower scrolling.
 
 ### AppImage — any distro
 
-Download `tuxkitchen_0.2.1_amd64.AppImage`, make it executable, run:
+Download `tuxkitchen_0.3.0_amd64.AppImage`, make it executable, run:
 
 ```sh
-chmod +x tuxkitchen_0.2.1_amd64.AppImage
-./tuxkitchen_0.2.1_amd64.AppImage
+chmod +x tuxkitchen_0.3.0_amd64.AppImage
+./tuxkitchen_0.3.0_amd64.AppImage
 ```
 
 The kitchen drives **your system's** tooling — run the built-in **Tools**

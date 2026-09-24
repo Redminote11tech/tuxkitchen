@@ -43,6 +43,7 @@ const TOOLS: &[(&str, &str, &str)] = &[
     ("bzip2", "payload.bin bzip2 blobs", "pacman: bzip2"),
     ("zstd", "payload.bin zstd blobs", "pacman: zstd"),
     ("gzip", "kernel embedded-config (IKCONFIG) decompression", "pacman: gzip"),
+    ("java", "APK signing, apktool, deodexing", "pacman: jdk-openjdk"),
     ("adb", "connected-device info and reboots", "pacman: android-tools"),
     ("fastboot", "bootloader/fastbootd info and guarded flashing", "pacman: android-tools"),
 ];

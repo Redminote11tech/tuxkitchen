@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { openPath } from "@tauri-apps/plugin-opener";
 import {
   Folder, FolderOpen, FileCode, ChevronRight, CornerLeftUp,
-  Pencil, Trash2, ScanSearch, Hammer,
+  Pencil, Trash2, ScanSearch, Hammer, BadgeCheck,
 } from "lucide-react";
 import { Project } from "./ProjectsView";
 import { toast } from "../lib/toastStore";
@@ -133,9 +133,22 @@ export function FilesView({ activeProject }: FilesViewProps) {
       await runBusy("Recompiling with apktool", () =>
         invoke("apktool_recompile", { apkDir: dir }),
       );
-      toast.success("Recompiled — output is in dist/ inside the folder.");
+      toast.success("Recompiled — output is in dist/ inside the folder. Select it and use Sign APK to make it installable.");
     } catch (e) {
       toast.error(`apktool failed: ${e}`);
+    }
+  };
+
+  const signSelected = async () => {
+    if (!selected || !workspace) return;
+    const full = `${workspace}/${rel ? `${rel}/` : ""}${selected.name}`;
+    try {
+      await runBusy(`Signing ${selected.name}`, () =>
+        invoke("sign_apk", { apkPath: full }),
+      );
+      toast.success(`${selected.name} signed (v1+v2+v3, debug key) — installable now.`);
+    } catch (e) {
+      toast.error(`Signing failed: ${e}`);
     }
   };
 
@@ -258,6 +271,12 @@ export function FilesView({ activeProject }: FilesViewProps) {
               <button className="primary flex-row" style={{ gap: 8 }} onClick={decompile}>
                 <Hammer size={16} />
                 Decompile (apktool)
+              </button>
+            )}
+            {selected.name.endsWith(".apk") && (
+              <button className="secondary flex-row" style={{ gap: 8 }} onClick={signSelected}>
+                <BadgeCheck size={16} />
+                Sign APK
               </button>
             )}
             <button className="icon-btn" title="Rename" onClick={renameSelected}>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FolderOpen, FileCode, ShieldCheck, Wrench, Package, ArrowDownToLine, Component, Cpu } from "lucide-react";
+import { FolderOpen, FileCode, ShieldCheck, Wrench, Package, ArrowDownToLine, Component, Cpu, FileArchive } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { Project } from "./ProjectsView";
@@ -39,6 +39,37 @@ export function MagiskView({ activeProject }: MagiskViewProps) {
       setKernelInfo(await invoke<KernelFsSupport>("read_kernel_config", { kernelPath: `${ws}/kernel` }));
     } catch {
       setKernelInfo(null);
+    }
+  };
+
+  const extractRamdisk = async () => {
+    if (!workspace) return;
+    try {
+      const n = await runBusy("Extracting ramdisk", () =>
+        invoke<number>("ramdisk_extract", {
+          ramdiskCpio: `${workspace}/ramdisk.cpio`,
+          outDir: `${workspace}/ramdisk`,
+        }),
+      );
+      toast.success(`Extracted ${n} entries into ramdisk/ - edit via the Files tab.`);
+    } catch (e) {
+      toast.error(`Ramdisk extract failed: ${e}`);
+    }
+  };
+
+  const repackRamdisk = async () => {
+    if (!workspace) return;
+    try {
+      const n = await runBusy("Rebuilding ramdisk", () =>
+        invoke<number>("ramdisk_repack", {
+          ramdiskDir: `${workspace}/ramdisk`,
+          originalCpio: `${workspace}/ramdisk.cpio`,
+          outCpio: `${workspace}/ramdisk.cpio`,
+        }),
+      );
+      toast.success(`Ramdisk rebuilt (${n} entries) - now use Repack Boot.`);
+    } catch (e) {
+      toast.error(`Ramdisk repack failed: ${e}`);
     }
   };
 
@@ -184,6 +215,30 @@ export function MagiskView({ activeProject }: MagiskViewProps) {
         </div>
         <p style={{ marginTop: '14px', fontSize: '13px', color: 'var(--md-sys-color-outline)' }}>
           <em>Patch VBMeta writes flags 3 (HASHTREE_DISABLED | VERIFICATION_DISABLED). DTBO operations work on the <code>dtbo_parts/</code> folder in the workspace.</em>
+        </p>
+      </div>
+
+      <div className="md-card">
+        <div className="flex-row" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div className="md-card-title" style={{ margin: 0 }}>Ramdisk Editing</div>
+          <div className="flex-row" style={{ gap: 8 }}>
+            <button className="secondary flex-row" style={{ gap: 8 }} disabled={!workspace} onClick={extractRamdisk}>
+              <FileArchive size={16} />
+              Extract ramdisk
+            </button>
+            <button className="secondary flex-row" style={{ gap: 8 }} disabled={!workspace} onClick={repackRamdisk}>
+              <Package size={16} />
+              Repack ramdisk
+            </button>
+          </div>
+        </div>
+        <p style={{ fontSize: 13, color: 'var(--md-sys-color-outline)', marginTop: 10 }}>
+          <em>
+            Extract unpacks <code>ramdisk.cpio</code> into <code>ramdisk/</code> — edit files there via the
+            Files tab (fstab, init.rc, …), then rebuild. Untouched entries keep their original ownership,
+            modes and timestamps; a pristine copy of the archive is kept as <code>ramdisk.orig.cpio</code>.
+            Finish with Repack Boot.
+          </em>
         </p>
       </div>
 
